@@ -203,8 +203,11 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
     }
 
     public void setSimulateLandscape(boolean isSimulateLandscape) {
+        boolean previousValue = this.simulateLandscape;
         this.simulateLandscape = isSimulateLandscape;
-        requestLayout();
+        if (playing && isSimulateLandscape ^ previousValue) {
+            fixVideoLayout();
+        }
     }
 
     public void setAutoPlay(boolean autoPlay) {
@@ -351,6 +354,11 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         TextureView surfaceView = (TextureView) playerVideoView.getRenderView();
 
         if (simulateLandscape) {
+
+            int viewWidth = this.getMeasuredWidth();
+            int viewHeight = this.getMeasuredHeight();
+            surfaceView.layout(0, 0, viewWidth, viewHeight);
+
             // scale 1  (ww / vw)
             // scale 2 (wh / scale 1)
             RenderView renderView = playerVideoView.getRenderView();

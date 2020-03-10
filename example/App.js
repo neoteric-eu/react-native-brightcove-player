@@ -20,7 +20,8 @@ export default class App extends Component {
     offlineVideos: [],
     playback: {
       referenceId: null,
-      videoToken: null
+      videoToken: null,
+      simulateLandscape: false
     }
   };
 
@@ -99,7 +100,6 @@ export default class App extends Component {
               accountId={ACCOUNT_ID}
               policyKey={POLICY_KEY}
               autoPlay
-              simulateLandscape={true}
               {...this.state.playback}
             />
         }
