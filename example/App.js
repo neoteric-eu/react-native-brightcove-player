@@ -86,7 +86,7 @@ export default class App extends Component {
   }
 
   componentWillUnmount() {
-    this.disposer && this.disposer();
+    this.disposer && this.disposer.remove();
   }
 
   render() {
