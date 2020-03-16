@@ -14,7 +14,7 @@ export default class App extends Component {
     playback: {
       referenceId: null,
       videoToken: null,
-      simulateLandscape: false
+      simulateLandscape: true
     }
   };
 
@@ -60,7 +60,10 @@ export default class App extends Component {
     );
     if (item.videoId) {
         this.setState({
-            playback: { videoId: item.videoId }
+            playback: {
+                videoId: item.videoId,
+                simulateLandscape: this.state.playback.simulateLandscape
+            }
         });
     }
     else {
@@ -68,10 +71,12 @@ export default class App extends Component {
           playback:
             downloadStatus && downloadStatus.downloadProgress === 1
               ? {
-                  videoToken: downloadStatus.videoToken
+                  videoToken: downloadStatus.videoToken,
+                  simulateLandscape: this.state.playback.simulateLandscape
                 }
               : {
-                  referenceId: item.referenceId
+                  referenceId: item.referenceId,
+                  simulateLandscape: this.state.playback.simulateLandscape
                 }
         });
     }
