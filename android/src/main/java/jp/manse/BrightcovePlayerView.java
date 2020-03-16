@@ -1,6 +1,7 @@
 package jp.manse;
 
 import android.app.Activity;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import androidx.core.view.ViewCompat;
 
@@ -209,12 +210,6 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         if (playing && isSimulateLandscape ^ previousValue) {
             fixVideoLayout();
         }
-        if (isSimulateLandscape) {
-            setSystemUiVisibility(SYSTEM_UI_FLAG_HIDE_NAVIGATION | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        }
-        else {
-            setSystemUiVisibility(getSystemUiVisibility() & ~SYSTEM_UI_FLAG_HIDE_NAVIGATION & ~SYSTEM_UI_FLAG_FULLSCREEN & ~SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        }
     }
 
     public void setAutoPlay(boolean autoPlay) {
@@ -322,6 +317,26 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         }
     }
 
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        if (simulateLandscape) {
+            ((ThemedReactContext) getContext()).getCurrentActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            setSystemUiVisibility(getSystemUiVisibility() | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_IMMERSIVE_STICKY | SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        if (simulateLandscape) {
+            ((ThemedReactContext) getContext()).getCurrentActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            setSystemUiVisibility(getSystemUiVisibility() & ~SYSTEM_UI_FLAG_FULLSCREEN & ~SYSTEM_UI_FLAG_IMMERSIVE_STICKY & ~SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }
+    }
+
     private void loadVideo() {
         if (this.videoToken != null && !this.videoToken.equals("")) {
             this.offlineCatalog = new OfflineCatalog(this.context, this.playerVideoView.getEventEmitter(), this.accountId, this.policyKey);
@@ -360,47 +375,17 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
 
         TextureView surfaceView = (TextureView) playerVideoView.getRenderView();
 
-        if (simulateLandscape) {
 
-//            int viewWidth = this.getMeasuredWidth();
-//            int viewHeight = this.getMeasuredHeight();
-            ((View) getParent()).setBackgroundColor(Color.RED);
+        int viewWidth = this.getMeasuredWidth();
+        int viewHeight = this.getMeasuredHeight();
 
-            layout(0, 0, getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
+        surfaceView.measure(viewWidth, viewHeight);
+        int surfaceWidth = surfaceView.getMeasuredWidth();
+        int surfaceHeight = surfaceView.getMeasuredHeight();
+        int leftOffset = (viewWidth - surfaceWidth) / 2;
+        int topOffset = (viewHeight - surfaceHeight) / 2;
+        surfaceView.layout(leftOffset, topOffset, leftOffset + surfaceWidth, topOffset + surfaceHeight);
 
-            // scale 1  (ww / vw)
-            // scale 2 (wh / scale 1)
-            RenderView renderView = playerVideoView.getRenderView();
-
-            float pX = getWidth() / 2.0f;
-            float pY = getHeight() / 2.0f;
-
-            Matrix undoDefaultStretchAndRotate = new Matrix();
-            undoDefaultStretchAndRotate.setScale(1.0f,
-                    (1.0f / ((getHeight() / (float) getWidth()))) * (renderView.getVideoHeight() / (float) renderView.getVideoWidth()),
-                    pX,
-                    pY);
-
-            undoDefaultStretchAndRotate.postRotate(90, pX, pY);
-            undoDefaultStretchAndRotate.postScale(getHeight() / (float) getWidth(),
-                    getHeight() / (float) getWidth(), pX, pY);
-
-            surfaceView.setTransform(undoDefaultStretchAndRotate);
-
-        }
-        else {
-            surfaceView.setTransform(null);
-
-            int viewWidth = this.getMeasuredWidth();
-            int viewHeight = this.getMeasuredHeight();
-
-            surfaceView.measure(viewWidth, viewHeight);
-            int surfaceWidth = surfaceView.getMeasuredWidth();
-            int surfaceHeight = surfaceView.getMeasuredHeight();
-            int leftOffset = (viewWidth - surfaceWidth) / 2;
-            int topOffset = (viewHeight - surfaceHeight) / 2;
-            surfaceView.layout(leftOffset, topOffset, leftOffset + surfaceWidth, topOffset + surfaceHeight);
-        }
     }
 
     private void printKeys(Map<String, Object> map) {

@@ -99,13 +99,23 @@ export default class App extends Component {
       <View style={styles.container}>
         <StatusBar barStyle="light-content" />
         {
-            this.state.playback.videoId &&
+            (this.state.playback.videoId || this.state.playback.referenceId || this.state.playback.videoToken) &&
             <BrightcovePlayer
               style={styles.video}
               accountId={ACCOUNT_ID}
               policyKey={POLICY_KEY}
               autoPlay
               {...this.state.playback}
+              onEnd={function() {
+                  this.setState({
+                      playback: {
+                          ...this.state.playback,
+                          videoId: null,
+                          referenceId: null,
+                          videoToken: null
+                      }
+                  })
+              }.bind(this)}
             />
         }
         <FlatList
