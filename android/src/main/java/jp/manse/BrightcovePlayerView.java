@@ -1,5 +1,6 @@
 package jp.manse;
 
+import android.app.Activity;
 import android.graphics.Color;
 import androidx.core.view.ViewCompat;
 
@@ -101,6 +102,7 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         eventEmitter.on(EventType.DID_PLAY, new EventListener() {
             @Override
             public void processEvent(Event e) {
+
                 BrightcovePlayerView.this.playing = true;
                 WritableMap event = Arguments.createMap();
                 ReactContext reactContext = (ReactContext) BrightcovePlayerView.this.getContext();
@@ -206,6 +208,12 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         this.simulateLandscape = isSimulateLandscape;
         if (playing && isSimulateLandscape ^ previousValue) {
             fixVideoLayout();
+        }
+        if (isSimulateLandscape) {
+            setSystemUiVisibility(SYSTEM_UI_FLAG_HIDE_NAVIGATION | SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
+        else {
+            setSystemUiVisibility(getSystemUiVisibility() & ~SYSTEM_UI_FLAG_HIDE_NAVIGATION & ~SYSTEM_UI_FLAG_FULLSCREEN & ~SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         }
     }
 
@@ -354,9 +362,11 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
 
         if (simulateLandscape) {
 
-            int viewWidth = this.getMeasuredWidth();
-            int viewHeight = this.getMeasuredHeight();
-            surfaceView.layout(0, 0, viewWidth, viewHeight);
+//            int viewWidth = this.getMeasuredWidth();
+//            int viewHeight = this.getMeasuredHeight();
+            ((View) getParent()).setBackgroundColor(Color.RED);
+
+            layout(0, 0, getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
 
             // scale 1  (ww / vw)
             // scale 2 (wh / scale 1)
