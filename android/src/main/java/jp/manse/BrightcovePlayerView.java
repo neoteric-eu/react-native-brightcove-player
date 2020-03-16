@@ -362,10 +362,6 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
 
         if (simulateLandscape) {
 
-//            int viewWidth = this.getMeasuredWidth();
-//            int viewHeight = this.getMeasuredHeight();
-            ((View) getParent()).setBackgroundColor(Color.RED);
-
             layout(0, 0, getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
 
             // scale 1  (ww / vw)
