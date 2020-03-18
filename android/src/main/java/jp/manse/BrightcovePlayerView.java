@@ -1,11 +1,17 @@
 package jp.manse;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import androidx.core.view.ViewCompat;
 
 import android.graphics.Matrix;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.OrientationEventListener;
 import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
@@ -63,8 +69,23 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
     private boolean playing = false;
     private int bitRate = 0;
     private float playbackRate = 1;
+    private int currentOrientation;
     protected boolean simulateLandscape = false;
     private static final TrackSelection.Factory FIXED_FACTORY = new FixedTrackSelection.Factory();
+
+    private BroadcastReceiver orientationChangeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                enterImmersiveMode();
+            }
+            else {
+                exitImmersiveMode();
+            }
+        }
+    };
+
+    private IntentFilter orientationChangeIntentFilter = new IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED);
 
     public BrightcovePlayerView(ThemedReactContext context, ReactApplicationContext applicationContext) {
         super(context);
@@ -80,6 +101,8 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         this.mediaController = new BrightcoveMediaController(this.playerVideoView);
         this.playerVideoView.setMediaController(this.mediaController);
         this.requestLayout();
+
+        currentOrientation = getResources().getConfiguration().orientation;
 
         EventEmitter eventEmitter = this.playerVideoView.getEventEmitter();
         eventEmitter.on(EventType.VIDEO_SIZE_KNOWN, new EventListener() {
@@ -101,6 +124,7 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         eventEmitter.on(EventType.DID_PLAY, new EventListener() {
             @Override
             public void processEvent(Event e) {
+
                 BrightcovePlayerView.this.playing = true;
                 WritableMap event = Arguments.createMap();
                 ReactContext reactContext = (ReactContext) BrightcovePlayerView.this.getContext();
@@ -172,6 +196,33 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
                 reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(BrightcovePlayerView.this.getId(), BrightcovePlayerManager.EVENT_UPDATE_BUFFER_PROGRESS, event);
             }
         });
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            enterImmersiveMode();
+        }
+        getContext().registerReceiver(orientationChangeReceiver, orientationChangeIntentFilter);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        getContext().unregisterReceiver(orientationChangeReceiver);
+        exitImmersiveMode();
+    }
+
+    protected void enterImmersiveMode() {
+        setSystemUiVisibility(getSystemUiVisibility() | SYSTEM_UI_FLAG_HIDE_NAVIGATION | SYSTEM_UI_FLAG_IMMERSIVE_STICKY | SYSTEM_UI_FLAG_FULLSCREEN);
+    }
+
+    protected  void exitImmersiveMode() {
+        setSystemUiVisibility(getSystemUiVisibility() & ~SYSTEM_UI_FLAG_IMMERSIVE_STICKY & ~SYSTEM_UI_FLAG_HIDE_NAVIGATION & ~SYSTEM_UI_FLAG_FULLSCREEN);
     }
 
     public void setPolicyKey(String policyKey) {
