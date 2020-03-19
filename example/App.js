@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BrightcovePlayer, BrightcovePlayerPoster, BrightcovePlayerUtil } from 'react-native-brightcove-player';
-
+import Orientation from 'react-native-orientation-locker'
 const ACCOUNT_ID = '5434391461001';
 const POLICY_KEY =
   'BCpkADawqM0T8lW3nMChuAbrcunBBHmh4YkNl5e6ZrKQwPiK_Y83RAOF4DP5tyBF_ONBVgrEjqW6fbV0nKRuHvjRU3E8jdT9WMTOXfJODoPML6NUDCYTwTHxtNlr5YdyGYaCPLhMUZ3Xu61L';
@@ -62,6 +62,7 @@ export default class App extends Component {
   }
 
   play(item) {
+    Orientation.lockToLandscape();
     const downloadStatus = this.state.offlineVideos.find(
       video => video.videoId === item.videoId
     );
@@ -75,6 +76,9 @@ export default class App extends Component {
               referenceId: item.referenceId
             }
     });
+    setTimeout(function() {
+        Orientation.lockToPortrait();
+    }, 5000);
   }
 
   delete(videoToken) {
@@ -86,13 +90,13 @@ export default class App extends Component {
   }
 
   componentWillUnmount() {
-    this.disposer && this.disposer();
+    this.disposer && this.disposer.remove();
   }
 
   render() {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" />
+
         {
             this.state.playback.referenceId &&
             <BrightcovePlayer

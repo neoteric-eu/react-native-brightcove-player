@@ -71,12 +71,19 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
     private float playbackRate = 1;
     private int currentOrientation;
     protected boolean simulateLandscape = false;
+    private boolean isInImmersiveMode = false;
     private static final TrackSelection.Factory FIXED_FACTORY = new FixedTrackSelection.Factory();
 
     private BroadcastReceiver orientationChangeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+
+            if (currentOrientation == getResources().getConfiguration().orientation) {
+                return;
+            }
+            currentOrientation = getResources().getConfiguration().orientation;
+
+            if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
                 enterImmersiveMode();
             }
             else {
@@ -101,8 +108,6 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         this.mediaController = new BrightcoveMediaController(this.playerVideoView);
         this.playerVideoView.setMediaController(this.mediaController);
         this.requestLayout();
-
-        currentOrientation = getResources().getConfiguration().orientation;
 
         EventEmitter eventEmitter = this.playerVideoView.getEventEmitter();
         eventEmitter.on(EventType.VIDEO_SIZE_KNOWN, new EventListener() {
@@ -202,8 +207,8 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
-
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        currentOrientation = getResources().getConfiguration().orientation;
+        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
             enterImmersiveMode();
         }
         getContext().registerReceiver(orientationChangeReceiver, orientationChangeIntentFilter);
@@ -218,11 +223,23 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
     }
 
     protected void enterImmersiveMode() {
-        setSystemUiVisibility(getSystemUiVisibility() | SYSTEM_UI_FLAG_HIDE_NAVIGATION | SYSTEM_UI_FLAG_IMMERSIVE_STICKY | SYSTEM_UI_FLAG_FULLSCREEN);
+        getHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                setSystemUiVisibility(SYSTEM_UI_FLAG_HIDE_NAVIGATION | SYSTEM_UI_FLAG_IMMERSIVE_STICKY | SYSTEM_UI_FLAG_FULLSCREEN);
+                Log.d("FULLSCREEN-NEO", "Entered full screen mode");
+                isInImmersiveMode = true;
+            }
+        });
+
     }
 
     protected  void exitImmersiveMode() {
-        setSystemUiVisibility(getSystemUiVisibility() & ~SYSTEM_UI_FLAG_IMMERSIVE_STICKY & ~SYSTEM_UI_FLAG_HIDE_NAVIGATION & ~SYSTEM_UI_FLAG_FULLSCREEN);
+        if (isInImmersiveMode) {
+            isInImmersiveMode = false;
+            setSystemUiVisibility(getSystemUiVisibility() & ~SYSTEM_UI_FLAG_IMMERSIVE_STICKY & ~SYSTEM_UI_FLAG_HIDE_NAVIGATION & ~SYSTEM_UI_FLAG_FULLSCREEN);
+            Log.d("FULLSCREEN-NEO", "Exited full screen mode");
+        }
     }
 
     public void setPolicyKey(String policyKey) {
