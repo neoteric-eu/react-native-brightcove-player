@@ -79,6 +79,10 @@ public class BrightcovePlayerPosterView extends RelativeLayout implements Lifecy
     }
 
     private void loadPoster() {
+        if (accountId == null || policyKey == null) {
+            return;
+        }
+
         if (this.videoToken != null && !this.videoToken.equals("")) {
             this.offlineCatalog = new OfflineCatalog(this.context, DefaultEventEmitter.sharedEventEmitter, this.accountId, this.policyKey);
             Video video = this.offlineCatalog.findOfflineVideoById(this.videoToken);

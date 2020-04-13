@@ -1,5 +1,5 @@
 apply plugin: "com.android.application"
-
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 import com.android.build.OutputFile
 
 /**
@@ -128,7 +128,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example"
+        applicationId "com.bc.example"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -154,6 +154,7 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            resValue "string", "build_config_package", "com.example"
         }
         release {
             // Caution! In production, you need to generate your own keystore file.

@@ -65,24 +65,27 @@ export default class App extends Component {
     const downloadStatus = this.state.offlineVideos.find(
       video => video.videoId === item.videoId
     );
-    if (item.videoId) {
+    if (downloadStatus && downloadStatus.downloadProgress === 1) {
+        this.setState({
+            playback: {
+                videoToken: downloadStatus.videoToken
+            }
+        });
+    }
+    else if (item.referenceId) {
+        this.setState({
+            playback: {
+                referenceId: item.referenceId
+            }
+        });
+    }
+    else if (item.videoId) {
         this.setState({
             playback: {
                 videoId: item.videoId
             }
         });
-        return;
     }
-    this.setState({
-      playback:
-        downloadStatus && downloadStatus.downloadProgress === 1
-          ? {
-              videoToken: downloadStatus.videoToken
-            }
-          : {
-              referenceId: item.referenceId
-            }
-    });
   }
 
   delete(videoToken) {
@@ -114,7 +117,7 @@ export default class App extends Component {
         <FlatList
           style={styles.list}
           extraData={this.state.offlineVideos}
-          data={this.state.videos}
+          data={this.state.offlineVideos}
           keyExtractor={item => item.referenceId}
           renderItem={({ item }) => {
             const downloadStatus = this.state.offlineVideos.find(

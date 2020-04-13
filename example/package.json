@@ -11,7 +11,7 @@
   "dependencies": {
     "react": "16.9.0",
     "react-native": "0.61.2",
-    "react-native-brightcove-player": "1.7.0",
+    "react-native-brightcove-player": "git+https://github.com/neoteric-eu/react-native-brightcove-player.git#chore/JC-bc-version-6.12.0",
     "react-native-config": "^1.0.0"
   },
   "devDependencies": {
