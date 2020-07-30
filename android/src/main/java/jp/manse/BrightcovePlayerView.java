@@ -361,8 +361,7 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
 
     private void fixVideoLayout(Event e) {
 
-        TextureView surfaceView = (TextureView) playerVideoView.getRenderView();
-        surfaceView.setTransform(null);
+        RenderView renderView = playerVideoView.getRenderView();
 
         // Get the width and height of the video
         float width = e.getIntegerProperty(Event.VIDEO_WIDTH);
@@ -374,7 +373,7 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         int videoWidth = (int) (viewHeight * aspectRatio);
         int videoHeight = viewHeight; // We cover the entire display's height
 
-        surfaceView.layout(0, 0, videoWidth, videoHeight);
+        ((View) renderView).layout(0, 0, videoWidth, videoHeight);
     }
 
     private void printKeys(Map<String, Object> map) {
