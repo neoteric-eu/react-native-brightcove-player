@@ -77,6 +77,8 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         this.setBackgroundColor(Color.BLACK);
 
         this.playerVideoView = new BrightcoveExoPlayerVideoView(context.getCurrentActivity());
+        // Hide Poster
+        this.playerVideoView.getStillView().setImageAlpha(0);
         this.addView(this.playerVideoView);
         this.playerVideoView.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         this.playerVideoView.finishInitialization();
