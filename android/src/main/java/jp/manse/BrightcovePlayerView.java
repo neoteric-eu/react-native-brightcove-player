@@ -372,10 +372,12 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
 
         // Get height of view and resize surface to fill view's height
         int viewHeight = this.getMeasuredHeight();
+        int viewWidth = this.getMeasuredWidth();
         int videoWidth = (int) (viewHeight * aspectRatio);
         int videoHeight = viewHeight; // We cover the entire display's height
-
-        ((View) renderView).layout(0, 0, videoWidth, videoHeight);
+        int videoX = (int) ((viewWidth - videoWidth) * 0.5);
+        int videoY = 0;
+        ((View) renderView).layout(videoX, videoY, videoWidth, videoHeight);
     }
 
     private void printKeys(Map<String, Object> map) {
