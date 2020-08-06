@@ -1,9 +1,14 @@
 package jp.manse;
 
+import android.content.Context;
 import android.graphics.Color;
 import androidx.core.view.ViewCompat;
 
 import android.graphics.Matrix;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
+import android.os.Build;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceView;
@@ -51,6 +56,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class BrightcovePlayerView extends RelativeLayout implements LifecycleEventListener {
+
+    private static final String TAG = BrightcovePlayerView.class.getName();
+
     private ThemedReactContext context;
     private ReactApplicationContext applicationContext;
     private BrightcoveExoPlayerVideoView playerVideoView;
@@ -66,12 +74,16 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
     private boolean playing = false;
     private int bitRate = 0;
     private float playbackRate = 1;
+    private AudioManager audioManager;
+    private AudioFocusRequest currentAudioFocusRequest;
+    private AudioManager.OnAudioFocusChangeListener currentAudioFocusListener;
     protected boolean simulateLandscape = false;
     private static final TrackSelection.Factory FIXED_FACTORY = new FixedTrackSelection.Factory();
 
     public BrightcovePlayerView(ThemedReactContext context, ReactApplicationContext applicationContext) {
         super(context);
         this.context = context;
+        this.audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         this.applicationContext = applicationContext;
         this.applicationContext.addLifecycleEventListener(this);
         this.setBackgroundColor(Color.BLACK);
@@ -126,6 +138,7 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
                 WritableMap event = Arguments.createMap();
                 ReactContext reactContext = (ReactContext) BrightcovePlayerView.this.getContext();
                 reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(BrightcovePlayerView.this.getId(), BrightcovePlayerManager.EVENT_PLAY, event);
+                requestAudioFocusIfNecessary();
             }
         });
         eventEmitter.on(EventType.DID_PAUSE, new EventListener() {
@@ -228,12 +241,68 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
 
     public void setPlay(boolean play) {
 
-        if (this.playing == play) return;
+        if (this.playing == play) {
+            return;
+        }
         if (play) {
+
+            if (!requestAudioFocusIfNecessary()) {
+                Log.w(TAG, "Brightcove wrapper could not get audio focus.");
+            }
             this.playerVideoView.start();
+            this.playing = true;
+
         } else {
             this.playerVideoView.pause();
+            this.playing = false;
         }
+    }
+
+    private boolean requestAudioFocusIfNecessary() {
+
+        // We already have audio focus.
+        if (currentAudioFocusListener != null) {
+            return true;
+        }
+
+        currentAudioFocusListener = focusChange -> {
+            switch (focusChange) {
+                case AudioManager.AUDIOFOCUS_LOSS:
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                    // Other audio is interrupting us. Since we're playing video,
+                    // Let's not make any assumptions that we should re-start
+                    // once that audio is finished.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && currentAudioFocusListener != null) {
+                        audioManager.abandonAudioFocusRequest(currentAudioFocusRequest);
+                    }
+                    else if (currentAudioFocusListener != null) {
+                        audioManager.abandonAudioFocus(currentAudioFocusListener);
+                    }
+                    currentAudioFocusListener = null;
+                    currentAudioFocusRequest = null;
+                    setPlay(false);
+                    break;
+            }
+        };
+        int res;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            AudioAttributes attrs = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MOVIE)
+                    .build();
+            currentAudioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(attrs)
+                    .setAcceptsDelayedFocusGain(false)
+                    .setWillPauseWhenDucked(false)
+                    .setOnAudioFocusChangeListener(currentAudioFocusListener)
+                    .build();
+            res = audioManager.requestAudioFocus(currentAudioFocusRequest);
+        }
+        else {
+            res = audioManager.requestAudioFocus(currentAudioFocusListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        }
+
+        return res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
     }
 
     public void setDefaultControlDisabled(boolean disabled) {
@@ -357,7 +426,7 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         BrightcovePlayerView.this.playerVideoView.clear();
         BrightcovePlayerView.this.playerVideoView.add(video);
         if (BrightcovePlayerView.this.autoPlay) {
-            BrightcovePlayerView.this.playerVideoView.start();
+            setPlay(true);
         }
     }
 
@@ -413,5 +482,7 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         this.playerVideoView.clear();
         this.removeAllViews();
         this.applicationContext.removeLifecycleEventListener(this);
+        currentAudioFocusListener = null;
+        currentAudioFocusRequest = null;
     }
 }
