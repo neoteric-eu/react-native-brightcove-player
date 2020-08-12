@@ -437,16 +437,32 @@ public class BrightcovePlayerView extends RelativeLayout implements LifecycleEve
         // Get the width and height of the video
         float width = e.getIntegerProperty(Event.VIDEO_WIDTH);
         float height = e.getIntegerProperty(Event.VIDEO_HEIGHT);
-        float aspectRatio = width/height;
+        float videoAspectRatio = width/height;
 
         // Get height of view and resize surface to fill view's height
         int viewHeight = this.getMeasuredHeight();
         int viewWidth = this.getMeasuredWidth();
-        int videoWidth = (int) (viewHeight * aspectRatio);
-        int videoHeight = viewHeight; // We cover the entire display's height
-        int videoX = (int) ((viewWidth - videoWidth) * 0.5);
+        float screenAspectRatio = (float) viewWidth / (float) viewHeight;
+
+        int videoX = 0;
         int videoY = 0;
-        ((View) renderView).layout(videoX, videoY, videoWidth, videoHeight);
+        int playerWidth;
+        int playerHeight;
+        if (screenAspectRatio > videoAspectRatio) {
+            // Screen is wider than 19:7. Use entire height, letterbox horizontal edges.
+            playerWidth = (int) (viewHeight * videoAspectRatio);
+            playerHeight = viewHeight;
+            videoX = (int) ((viewWidth - playerWidth) * 0.5);
+        }
+        else {
+            // Screen is taller than 19:7. User entire width, letterbox vertically.
+            playerHeight = (int) (viewWidth / videoAspectRatio);
+            playerWidth = viewWidth;
+            videoY = (int) ((viewHeight - playerHeight) * 0.5);
+        }
+
+        View bcVideoView = (View) renderView;
+        bcVideoView.layout(videoX, videoY, videoX + playerWidth, playerHeight + videoY);
     }
 
     private void printKeys(Map<String, Object> map) {
