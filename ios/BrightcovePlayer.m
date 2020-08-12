@@ -1,4 +1,5 @@
 #import <AVKit/AVKit.h>
+#import <AVFoundation/AVFoundation.h>
 #import "BrightcovePlayer.h"
 #import "BrightcovePlayerOfflineVideoManager.h"
 #import <BrightcovePlayerSDK/BCOVFPSBrightcoveAuthProxy.h>
@@ -17,6 +18,8 @@
 }
 
 - (void)setup {
+    
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
 
     _playbackController = [self createPlaybackController];
     _playbackController.delegate = self;
@@ -132,6 +135,7 @@
 - (void)setPlay:(BOOL)play {
     if (_playing == play) return;
     if (play) {
+        [[AVAudioSession sharedInstance] setActive:true error:nil];
         [_playbackController play];
     } else {
         [_playbackController pause];
