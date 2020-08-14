@@ -69,18 +69,26 @@ RCT_EXPORT_METHOD(requestDownloadVideoWithVideoId:(NSString *)videoId accountId:
             return;
         }
         [BrightcovePlayerOfflineVideoManager sharedManager].delegate = self;
-        [[BrightcovePlayerOfflineVideoManager sharedManager] requestVideoDownload:video mediaSelections: nil parameters:[self generateDownloadParameterWithBitRate:bitRate] completion:^(BCOVOfflineVideoToken offlineVideoToken, NSError *error) {
-            if (error) {
-                reject(kErrorCode, error.description, error);
-                return;
-            }
-            [NSUserDefaults.standardUserDefaults setObject: @{kUserDefaultKeyOfflineAccountId: accountId,
-                                                              kUserDefaultKeyOfflineVideoId: video.properties[kBCOVVideoPropertyKeyId]
-                                                              }
-                                                    forKey:[kUserDefaultKeyOfflinePrefix stringByAppendingString:offlineVideoToken]];
-            [NSUserDefaults.standardUserDefaults synchronize];
-            [self sendOfflineNotification];
-            resolve(offlineVideoToken);
+        [BrightcovePlayerOfflineVideoManager.sharedManager
+        preloadFairPlayLicense:video
+        parameters:[self generateDownloadParameterWithBitRate:bitRate]
+        completion:^(BCOVOfflineVideoToken offlineVideoToken, NSError *error) {
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [[BrightcovePlayerOfflineVideoManager sharedManager] requestVideoDownload:video mediaSelections: nil parameters:[self generateDownloadParameterWithBitRate:bitRate] completion:^(BCOVOfflineVideoToken offlineVideoToken, NSError *error) {
+                    if (error) {
+                        reject(kErrorCode, error.description, error);
+                        return;
+                    }
+                    [NSUserDefaults.standardUserDefaults setObject: @{kUserDefaultKeyOfflineAccountId: accountId,
+                                                                      kUserDefaultKeyOfflineVideoId: video.properties[kBCOVVideoPropertyKeyId]
+                                                                      }
+                                                            forKey:[kUserDefaultKeyOfflinePrefix stringByAppendingString:offlineVideoToken]];
+                    [NSUserDefaults.standardUserDefaults synchronize];
+                    [self sendOfflineNotification];
+                    resolve(offlineVideoToken);
+                }];
+            });
         }];
     }];
 }
