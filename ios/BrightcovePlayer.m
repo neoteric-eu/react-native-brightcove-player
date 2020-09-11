@@ -22,6 +22,8 @@
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
 
     _playbackController = [self createPlaybackController];
+    _playbackController.allowsExternalPlayback = true;
+    _playbackController.usesExternalPlaybackWhileExternalScreenIsActive = true;
     _playbackController.delegate = self;
     _playbackController.autoPlay = NO;
     _playbackController.autoAdvance = YES;
